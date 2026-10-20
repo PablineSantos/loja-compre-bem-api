@@ -1,11 +1,16 @@
 package com.senai.jonatas.comprebem.service;
 
+import com.senai.jonatas.comprebem.dto.PaginaDTO;
 import com.senai.jonatas.comprebem.dto.ProdutoRequestDTO;
 import com.senai.jonatas.comprebem.dto.ProdutoResponseDTO;
 import com.senai.jonatas.comprebem.entity.Produto;
 import com.senai.jonatas.comprebem.repository.ProdutoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,9 +29,21 @@ public class ProdutoService {
                 .toList();
     }
 
+    private static final int TAMANHO_PADRAO = 20;
+    private static final int TAMANHO_MAXIMO = 50;
+
+    public PaginaDTO<ProdutoResponseDTO> listar(int page, int size, String busca) {
+        int pagina = Math.max(page, 0);
+        int tamanho = size < 1 ? TAMANHO_PADRAO : Math.min(size, TAMANHO_MAXIMO);
+        var pageable = PageRequest.of(pagina, tamanho, Sort.by("nome"));
+        String termo = busca == null ? "" : busca.trim();
+        return PaginaDTO.of(produtoRepository.findByNomeContainingIgnoreCase(termo, pageable)
+                .map(ProdutoResponseDTO::toDto));
+    }
+
     public ProdutoResponseDTO findById(UUID id) {
         var produto = produtoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto nao encontrado"));
 
         return ProdutoResponseDTO.toDto(produto);
     }
@@ -49,7 +66,7 @@ public class ProdutoService {
 
     public ProdutoResponseDTO update(UUID produtoId, ProdutoRequestDTO produto) {
         Produto produtoExistente = produtoRepository.findById(produtoId)
-                .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto nao encontrado"));
 
         produtoExistente.setNome(produto.nome());
         produtoExistente.setDescricao(produto.descricao());
@@ -62,3 +79,4 @@ public class ProdutoService {
 
     }
 }
+

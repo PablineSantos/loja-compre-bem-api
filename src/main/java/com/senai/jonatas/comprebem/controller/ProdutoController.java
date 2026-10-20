@@ -1,5 +1,6 @@
 package com.senai.jonatas.comprebem.controller;
 
+import com.senai.jonatas.comprebem.dto.PaginaDTO;
 import com.senai.jonatas.comprebem.dto.ProdutoRequestDTO;
 import com.senai.jonatas.comprebem.dto.ProdutoResponseDTO;
 import com.senai.jonatas.comprebem.service.ProdutoService;
@@ -18,12 +19,15 @@ public class ProdutoController {
     private final ProdutoService produtoService;
 
     @GetMapping
-    public List<ProdutoResponseDTO> findAll() {
-        return produtoService.findAll();
+    public PaginaDTO<ProdutoResponseDTO> listar(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String busca) {
+        return produtoService.listar(page, size, busca);
     }
 
     @GetMapping("/{id}")
-    public ProdutoResponseDTO findById(UUID id) {
+    public ProdutoResponseDTO findById(@PathVariable UUID id) {
         return produtoService.findById(id);
     }
 
@@ -47,3 +51,4 @@ public class ProdutoController {
         produtoService.delete(produtoId);
     }
 }
+
